@@ -1,8 +1,27 @@
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from typing import List, Optional
+from sqlmodel import create_engine, Session, SQLModel, Field, select
 
-from root_router import root_router
 
+class Students(SQLModel, table=True):
+    __tablename__ = "students"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    firstname: str
+    lastname: str
+
+
+class Student(SQLModel):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    firstname: str
+    lastname: str
+
+
+sqlite_file_name = "database.db"
+sqlite_url = f"sqlite:///{sqlite_file_name}"
+engine = create_engine(sqlite_url, echo=True)
+
+SQLModel.metadata.create_all(engine)
 
 app = FastAPI()
 
@@ -22,4 +41,50 @@ app.add_middleware(
 )
 
 
-app.include_router(root_router)
+@app.post("/students", response_model=Students)
+async def create_student(student: Students):
+    with Session(engine) as db:
+        db.add(student)
+        db.commit()
+        db.refresh(student)
+        return student
+
+
+@app.get("/students", response_model=List[Students])
+async def read_students():
+    with Session(engine) as db:
+        statement = select(Students)
+        students = db.exec(statement).all()
+        return students
+
+
+@app.get("/students/{student_id}", response_model=Student)
+async def read_student(student_id: int):
+    with Session(engine) as db:
+        statement = select(Students).where(Students.id == student_id)
+        student = db.exec(statement).first()
+        return student
+
+
+@app.delete("/students/{student_id}", status_code=204)
+async def delete_student(student_id: int):
+    with Session(engine) as db:
+        statement = select(Students).where(Students.id == student_id)
+        student = db.exec(statement).first()
+        db.delete(student)
+        db.commit()
+        return {"message": f"{student} deleted successfully"}
+
+
+@app.patch("/students/{student_id}", response_model=Student)
+async def update_student(student_id: int, student: Student):
+    with Session(engine) as db:
+        statement = select(Students).where(Students.id == student_id)
+        student_db = db.exec(statement).first()
+        # student_db.id = student.id
+        student_db.firstname = student.firstname
+        student_db.lastname = student.lastname
+        db.add(student_db)
+        db.commit()
+        db.refresh(student_db)
+        return student_db
