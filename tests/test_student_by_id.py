@@ -54,6 +54,15 @@ def test_delete_removes_the_student(client, add_students):
     assert client.get("/students").json() == [alan]
 
 
+def test_delete_response_has_no_content_type(client, add_students):
+    [ada] = add_students(("Ada", "Lovelace"))
+
+    response = client.delete(f"/students/{ada['id']}")
+
+    assert response.status_code == 204
+    assert "content-type" not in response.headers
+
+
 NOT_FOUND = {"detail": "Student not found"}
 UNKNOWN_IDS = [999, 0, -1]
 
