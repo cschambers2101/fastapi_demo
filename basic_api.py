@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
@@ -21,7 +23,7 @@ class Student(SQLModel):
 
 # Setup the database
 sqlite_file_name = "database.db"
-sqlite_url = f"sqlite:///{sqlite_file_name}"
+sqlite_url = os.environ.get("DATABASE_URL", f"sqlite:///{sqlite_file_name}")
 engine = create_engine(sqlite_url, echo=True)
 
 # Create the database and all tables
@@ -57,10 +59,16 @@ async def create_student(student: Students):
 
 
 @app.get("/students", response_model=List[Students])
-async def read_students():
-    ''' This function is used to get all students in the database'''
+async def read_students(lastname: Optional[str] = None):
+    ''' This function is used to get all students in the database,
+    optionally only those whose lastname starts with the given text'''
     with Session(engine) as db:
         statement = select(Students)
+        prefix = (lastname or "").strip()
+        if prefix:
+            # Case is ignored for A to Z only, as SQLite folds no other letters
+            statement = statement.where(
+                Students.lastname.istartswith(prefix, autoescape=True))
         students = db.exec(statement).all()
         return students
 
