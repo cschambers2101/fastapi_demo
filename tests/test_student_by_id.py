@@ -1,14 +1,8 @@
 import pytest
 
 
-def create(client, firstname, lastname):
-    return client.post(
-        "/students", json={"firstname": firstname, "lastname": lastname}
-    ).json()
-
-
-def test_get_returns_the_student(client):
-    ada = create(client, "Ada", "Lovelace")
+def test_get_returns_the_student(client, add_students):
+    [ada] = add_students(("Ada", "Lovelace"))
 
     response = client.get(f"/students/{ada['id']}")
 
@@ -16,8 +10,8 @@ def test_get_returns_the_student(client):
     assert response.json() == ada
 
 
-def test_patch_changes_both_names(client):
-    ada = create(client, "Ada", "Lovelace")
+def test_patch_changes_both_names(client, add_students):
+    [ada] = add_students(("Ada", "Lovelace"))
 
     response = client.patch(
         f"/students/{ada['id']}", json={"firstname": "Augusta", "lastname": "King"}
@@ -29,8 +23,8 @@ def test_patch_changes_both_names(client):
     assert client.get(f"/students/{ada['id']}").json() == expected
 
 
-def test_patch_ignores_id_in_body(client):
-    ada = create(client, "Ada", "Lovelace")
+def test_patch_ignores_id_in_body(client, add_students):
+    [ada] = add_students(("Ada", "Lovelace"))
 
     response = client.patch(
         f"/students/{ada['id']}",
@@ -42,17 +36,16 @@ def test_patch_ignores_id_in_body(client):
     assert client.get(f"/students/{ada['id'] + 100}").status_code == 404
 
 
-def test_patch_needs_both_names(client):
-    ada = create(client, "Ada", "Lovelace")
+def test_patch_needs_both_names(client, add_students):
+    [ada] = add_students(("Ada", "Lovelace"))
 
     response = client.patch(f"/students/{ada['id']}", json={"firstname": "Augusta"})
 
     assert response.status_code == 422
 
 
-def test_delete_removes_the_student(client):
-    ada = create(client, "Ada", "Lovelace")
-    alan = create(client, "Alan", "Turing")
+def test_delete_removes_the_student(client, add_students):
+    ada, alan = add_students(("Ada", "Lovelace"), ("Alan", "Turing"))
 
     response = client.delete(f"/students/{ada['id']}")
 
@@ -74,8 +67,8 @@ def call(client, method, student_id):
 
 @pytest.mark.parametrize("method", ["get", "patch", "delete"])
 @pytest.mark.parametrize("student_id", UNKNOWN_IDS)
-def test_unknown_id_returns_404(client, method, student_id):
-    create(client, "Ada", "Lovelace")
+def test_unknown_id_returns_404(client, add_students, method, student_id):
+    add_students(("Ada", "Lovelace"))
 
     response = call(client, method, student_id)
 
@@ -83,8 +76,8 @@ def test_unknown_id_returns_404(client, method, student_id):
     assert response.json() == NOT_FOUND
 
 
-def test_deleting_twice_returns_404_the_second_time(client):
-    ada = create(client, "Ada", "Lovelace")
+def test_deleting_twice_returns_404_the_second_time(client, add_students):
+    [ada] = add_students(("Ada", "Lovelace"))
     client.delete(f"/students/{ada['id']}")
 
     response = client.delete(f"/students/{ada['id']}")
@@ -93,8 +86,8 @@ def test_deleting_twice_returns_404_the_second_time(client):
     assert response.json() == NOT_FOUND
 
 
-def test_patch_on_unknown_id_leaves_other_students_unchanged(client):
-    ada = create(client, "Ada", "Lovelace")
+def test_patch_on_unknown_id_leaves_other_students_unchanged(client, add_students):
+    [ada] = add_students(("Ada", "Lovelace"))
 
     client.patch("/students/999", json={"firstname": "Alan", "lastname": "Turing"})
 
