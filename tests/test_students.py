@@ -18,3 +18,30 @@ def test_filter_returns_students_whose_surname_starts_with_text(client, add_stud
 
     assert response.status_code == 200
     assert lastnames(response) == ["Smith", "Smithson"]
+
+
+def test_filter_ignores_case(client, add_students):
+    add_students(("Will", "Smith"), ("Ada", "Lovelace"))
+
+    lower = client.get("/students", params={"lastname": "smi"})
+    upper = client.get("/students", params={"lastname": "SMI"})
+
+    assert lastnames(lower) == ["Smith"]
+    assert lastnames(upper) == ["Smith"]
+
+
+def test_filter_matching_nobody_returns_empty_list(client, add_students):
+    add_students(("Will", "Smith"))
+
+    response = client.get("/students", params={"lastname": "Zed"})
+
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_filter_ignores_case_for_accented_letters(client, add_students):
+    add_students(("Mesut", "Özil"), ("Ada", "Lovelace"))
+
+    response = client.get("/students", params={"lastname": "öz"})
+
+    assert lastnames(response) == ["Özil"]
