@@ -1,6 +1,6 @@
 import os
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 from sqlmodel import create_engine, Session, SQLModel, Field, select
@@ -110,7 +110,7 @@ async def delete_student(student_id: int):
         student = get_student_or_404(db, student_id)
         db.delete(student)
         db.commit()
-        return {"message": f"{student} deleted successfully"}
+        return Response(status_code=204)
 
 
 @app.patch("/students/{student_id}", response_model=Student)
