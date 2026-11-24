@@ -95,3 +95,12 @@ def test_patch_with_invalid_body_on_unknown_id_returns_422(client):
     response = client.patch("/students/999", json={"firstname": "Ada"})
 
     assert response.status_code == 422
+
+
+@pytest.mark.parametrize("method", ["get", "patch", "delete"])
+@pytest.mark.parametrize("student_id", [2**63, -(2**63) - 1])
+def test_id_too_large_to_store_returns_404(client, method, student_id):
+    response = call(client, method, student_id)
+
+    assert response.status_code == 404
+    assert response.json() == NOT_FOUND

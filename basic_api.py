@@ -48,9 +48,16 @@ app.add_middleware(
 )
 
 
+# The range of IDs the database can store (a signed 64-bit integer)
+MIN_ID = -(2**63)
+MAX_ID = 2**63 - 1
+
+
 def get_student_or_404(db: Session, student_id: int) -> Students:
     ''' This function gets a student by id, or raises a 404 if there is none'''
-    student = db.get(Students, student_id)
+    student = None
+    if MIN_ID <= student_id <= MAX_ID:
+        student = db.get(Students, student_id)
     if student is None:
         raise HTTPException(status_code=404, detail="Student not found")
     return student
