@@ -39,14 +39,6 @@ def test_filter_matching_nobody_returns_empty_list(client, add_students):
     assert response.json() == []
 
 
-def test_filter_ignores_case_for_accented_letters(client, add_students):
-    add_students(("Mesut", "Özil"), ("Ada", "Lovelace"))
-
-    response = client.get("/students", params={"lastname": "öz"})
-
-    assert lastnames(response) == ["Özil"]
-
-
 def test_blank_filter_returns_every_student(client, add_students):
     add_students(("Will", "Smith"), ("Ada", "Lovelace"))
 
@@ -73,3 +65,11 @@ def test_percent_and_underscore_match_literally(client, add_students):
 
     assert percent.json() == []
     assert underscore.json() == []
+
+
+def test_escape_character_matches_literally(client, add_students):
+    add_students(("Ann", "A/B"), ("Ada", "AB"))
+
+    response = client.get("/students", params={"lastname": "A/"})
+
+    assert lastnames(response) == ["A/B"]

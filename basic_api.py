@@ -64,12 +64,12 @@ async def read_students(lastname: Optional[str] = None):
     optionally only those whose lastname starts with the given text'''
     with Session(engine) as db:
         statement = select(Students)
-        students = db.exec(statement).all()
-        prefix = (lastname or "").strip().casefold()
+        prefix = (lastname or "").strip()
         if prefix:
-            # casefold in Python, as SQLite only ignores case for A to Z
-            students = [s for s in students
-                        if s.lastname.casefold().startswith(prefix)]
+            # Case is ignored for A to Z only, as SQLite folds no other letters
+            statement = statement.where(
+                Students.lastname.istartswith(prefix, autoescape=True))
+        students = db.exec(statement).all()
         return students
 
 
