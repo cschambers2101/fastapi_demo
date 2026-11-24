@@ -21,6 +21,12 @@ class Student(SQLModel):
     lastname: str
 
 
+class StudentCreate(SQLModel):
+    ''' This class is used to map a request to create a student'''
+    firstname: str
+    lastname: str
+
+
 # Setup the database
 sqlite_file_name = "database.db"
 sqlite_url = os.environ.get("DATABASE_URL", f"sqlite:///{sqlite_file_name}")
@@ -64,8 +70,9 @@ def get_student_or_404(db: Session, student_id: int) -> Students:
 
 
 @app.post("/students", response_model=Students)
-async def create_student(student: Students):
+async def create_student(new_student: StudentCreate):
     ''' This function is used to create a student in the database'''
+    student = Students.model_validate(new_student)
     with Session(engine) as db:
         db.add(student)
         db.commit()
