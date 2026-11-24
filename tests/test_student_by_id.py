@@ -37,7 +37,9 @@ def test_patch_ignores_id_in_body(client):
         json={"id": ada["id"] + 100, "firstname": "Augusta", "lastname": "King"},
     )
 
+    assert response.status_code == 200
     assert response.json()["id"] == ada["id"]
+    assert client.get(f"/students/{ada['id'] + 100}").status_code == 404
 
 
 def test_patch_needs_both_names(client):
@@ -91,8 +93,24 @@ def test_deleting_twice_returns_404_the_second_time(client):
     assert response.json() == NOT_FOUND
 
 
-def test_patch_with_invalid_body_on_unknown_id_returns_422(client):
-    response = client.patch("/students/999", json={"firstname": "Ada"})
+def test_patch_on_unknown_id_leaves_other_students_unchanged(client):
+    ada = create(client, "Ada", "Lovelace")
+
+    client.patch("/students/999", json={"firstname": "Alan", "lastname": "Turing"})
+
+    assert client.get("/students").json() == [ada]
+
+
+@pytest.mark.parametrize("body", [{"firstname": "Ada"}, None], ids=["invalid", "none"])
+def test_patch_without_valid_body_on_unknown_id_returns_422(client, body):
+    response = client.patch("/students/999", json=body)
+
+    assert response.status_code == 422
+
+
+@pytest.mark.parametrize("method", ["get", "patch", "delete"])
+def test_non_integer_id_returns_422(client, method):
+    response = call(client, method, "abc")
 
     assert response.status_code == 422
 
