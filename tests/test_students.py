@@ -45,3 +45,21 @@ def test_filter_ignores_case_for_accented_letters(client, add_students):
     response = client.get("/students", params={"lastname": "öz"})
 
     assert lastnames(response) == ["Özil"]
+
+
+def test_blank_filter_returns_every_student(client, add_students):
+    add_students(("Will", "Smith"), ("Ada", "Lovelace"))
+
+    empty = client.get("/students", params={"lastname": ""})
+    spaces = client.get("/students", params={"lastname": "   "})
+
+    assert lastnames(empty) == ["Smith", "Lovelace"]
+    assert lastnames(spaces) == ["Smith", "Lovelace"]
+
+
+def test_filter_ignores_surrounding_spaces(client, add_students):
+    add_students(("Will", "Smith"), ("Ada", "Lovelace"))
+
+    response = client.get("/students", params={"lastname": "  Smi "})
+
+    assert lastnames(response) == ["Smith"]
