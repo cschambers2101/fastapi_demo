@@ -63,3 +63,13 @@ def test_filter_ignores_surrounding_spaces(client, add_students):
     response = client.get("/students", params={"lastname": "  Smi "})
 
     assert lastnames(response) == ["Smith"]
+
+
+def test_percent_and_underscore_match_literally(client, add_students):
+    add_students(("Will", "Smith"), ("Ada", "Lovelace"))
+
+    percent = client.get("/students", params={"lastname": "%"})
+    underscore = client.get("/students", params={"lastname": "_mith"})
+
+    assert percent.json() == []
+    assert underscore.json() == []
