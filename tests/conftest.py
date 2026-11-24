@@ -22,9 +22,12 @@ def client():
 @pytest.fixture
 def add_students(client):
     def _add(*names):
+        students = []
         for firstname, lastname in names:
             response = client.post(
                 "/students", json={"firstname": firstname, "lastname": lastname}
             )
-            assert response.status_code == 200
+            assert response.status_code == 201
+            students.append(response.json())
+        return students
     return _add
