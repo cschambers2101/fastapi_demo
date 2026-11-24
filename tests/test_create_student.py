@@ -23,3 +23,13 @@ def test_create_ignores_id_sent_by_client(client):
 
     assert first.json()["id"] == 1
     assert second.json()["id"] == 2
+
+
+def test_create_returns_201_with_the_new_student(client):
+    response = client.post(
+        "/students", json={"firstname": "Ada", "lastname": "Lovelace"}
+    )
+
+    assert response.status_code == 201
+    assert response.json() == {"id": 1, "firstname": "Ada", "lastname": "Lovelace"}
+    assert client.get("/students").json() == [response.json()]

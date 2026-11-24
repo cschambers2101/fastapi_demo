@@ -26,5 +26,5 @@ def add_students(client):
             response = client.post(
                 "/students", json={"firstname": firstname, "lastname": lastname}
             )
-            assert response.status_code == 200
+            assert response.status_code == 201
     return _add

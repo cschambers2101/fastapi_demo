@@ -69,7 +69,7 @@ def get_student_or_404(db: Session, student_id: int) -> Students:
     return student
 
 
-@app.post("/students", response_model=Students)
+@app.post("/students", response_model=Students, status_code=201)
 async def create_student(new_student: StudentCreate):
     ''' This function is used to create a student in the database'''
     student = Students.model_validate(new_student)
