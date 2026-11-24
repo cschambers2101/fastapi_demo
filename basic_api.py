@@ -59,10 +59,13 @@ async def create_student(student: Students):
 
 
 @app.get("/students", response_model=List[Students])
-async def read_students():
-    ''' This function is used to get all students in the database'''
+async def read_students(lastname: Optional[str] = None):
+    ''' This function is used to get all students in the database,
+    optionally only those whose lastname starts with the given text'''
     with Session(engine) as db:
         statement = select(Students)
+        if lastname:
+            statement = statement.where(Students.lastname.startswith(lastname))
         students = db.exec(statement).all()
         return students
 
