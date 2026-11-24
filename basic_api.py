@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
@@ -21,7 +23,7 @@ class Student(SQLModel):
 
 # Setup the database
 sqlite_file_name = "database.db"
-sqlite_url = f"sqlite:///{sqlite_file_name}"
+sqlite_url = os.environ.get("DATABASE_URL", f"sqlite:///{sqlite_file_name}")
 engine = create_engine(sqlite_url, echo=True)
 
 # Create the database and all tables
